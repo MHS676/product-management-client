@@ -16,11 +16,11 @@ export default function ProjectsPage() {
 
   const { data: projects, isLoading } = useQuery({
     queryKey: ['projects'],
-    queryFn: projectsApi.getAll,
+    queryFn: () => projectsApi.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: projectsApi.create,
+    mutationFn: (data: Partial<Project>) => projectsApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowModal(false);
@@ -39,7 +39,7 @@ export default function ProjectsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: projectsApi.delete,
+    mutationFn: (id: string) => projectsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
@@ -101,8 +101,27 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      <div className="grid">
-        {projects?.map((project) => (
+      {projects && projects.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+          <FolderOpen size={48} color="#3b82f6" style={{ margin: '0 auto 1rem' }} />
+          <h3>No Projects Yet</h3>
+          <p className="text-muted" style={{ marginBottom: '1.5rem' }}>
+            Get started by creating your first document review project
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              resetForm();
+              setShowModal(true);
+            }}
+          >
+            <Plus size={20} />
+            Create Your First Project
+          </button>
+        </div>
+      ) : (
+        <div className="grid">
+          {projects?.map((project) => (
           <div key={project.id} className="card">
             <div className="card-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -144,7 +163,8 @@ export default function ProjectsPage() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>

@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 export default function HomePage() {
   const { data: health } = useQuery({
     queryKey: ['health'],
-    queryFn: healthApi.check,
+    queryFn: () => healthApi.check(),
   });
 
   const features = [
