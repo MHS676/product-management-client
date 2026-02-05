@@ -9,7 +9,7 @@ export default function ProjectDetailPage() {
 
   const { data: project, isLoading } = useQuery({
     queryKey: ['projects', id],
-    queryFn: () => projectsApi.getOne(id!),
+    queryFn: () => projectsApi.getById(id!),
     enabled: !!id,
   });
 

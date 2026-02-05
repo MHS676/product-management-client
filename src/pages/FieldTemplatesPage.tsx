@@ -11,23 +11,23 @@ export default function FieldTemplatesPage() {
   const [formData, setFormData] = useState({
     projectId: '',
     fieldName: '',
-    fieldType: 'text' as 'text' | 'number' | 'date' | 'boolean',
+    fieldType: 'TEXT' as 'TEXT' | 'NUMBER' | 'DATE' | 'BOOLEAN',
     description: '',
     isRequired: false,
   });
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['field-templates'],
-    queryFn: fieldTemplatesApi.getAll,
+    queryFn: () => fieldTemplatesApi.getAll(),
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
-    queryFn: projectsApi.getAll,
+    queryFn: () => projectsApi.getAll(),
   });
 
   const createMutation = useMutation({
-    mutationFn: fieldTemplatesApi.create,
+    mutationFn: (data: Partial<FieldTemplate>) => fieldTemplatesApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['field-templates'] });
       setShowModal(false);
@@ -46,7 +46,7 @@ export default function FieldTemplatesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: fieldTemplatesApi.delete,
+    mutationFn: (id: string) => fieldTemplatesApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['field-templates'] });
     },
@@ -56,7 +56,7 @@ export default function FieldTemplatesPage() {
     setFormData({
       projectId: '',
       fieldName: '',
-      fieldType: 'text',
+      fieldType: 'TEXT',
       description: '',
       isRequired: false,
     });
@@ -142,7 +142,7 @@ export default function FieldTemplatesPage() {
               </tr>
             </thead>
             <tbody>
-              {templates?.map((template) => (
+              {templates?.map((template: FieldTemplate) => (
                 <tr key={template.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -150,7 +150,7 @@ export default function FieldTemplatesPage() {
                       {template.fieldName}
                     </div>
                   </td>
-                  <td>{template.project?.name || 'N/A'}</td>
+                  <td>{template.projectId}</td>
                   <td>
                     <span className={`badge ${getTypeBadge(template.fieldType)}`}>
                       {template.fieldType}
@@ -243,10 +243,15 @@ export default function FieldTemplatesPage() {
                   }
                   required
                 >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="boolean">Boolean</option>
+                  <option value="TEXT">Text</option>
+                  <option value="NUMBER">Number</option>
+                  <option value="DATE">Date</option>
+                  <option value="BOOLEAN">Boolean</option>
+                  <option value="CURRENCY">Currency</option>
+                  <option value="PERCENTAGE">Percentage</option>
+                  <option value="EMAIL">Email</option>
+                  <option value="URL">URL</option>
+                  <option value="PHONE">Phone</option>
                 </select>
               </div>
               <div className="form-group">

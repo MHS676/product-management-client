@@ -98,71 +98,141 @@ export interface Review {
 
 // Projects
 export const projectsApi = {
-  getAll: () => api.get<Project[]>('/projects'),
-  getById: (id: string) => api.get<Project>(`/projects/${id}`),
-  getStatistics: (id: string) => api.get(`/projects/${id}/statistics`),
-  create: (data: Partial<Project>) => api.post<Project>('/projects', data),
-  update: (id: string, data: Partial<Project>) => api.patch<Project>(`/projects/${id}`, data),
-  delete: (id: string) => api.delete(`/projects/${id}`),
+  getAll: async () => {
+    const response = await api.get<Project[]>('/projects');
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get<Project>(`/projects/${id}`);
+    return response.data;
+  },
+  getStatistics: async (id: string) => {
+    const response = await api.get(`/projects/${id}/statistics`);
+    return response.data;
+  },
+  create: async (data: Partial<Project>) => {
+    const response = await api.post<Project>('/projects', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Project>) => {
+    const response = await api.patch<Project>(`/projects/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
 };
 
 // Documents
 export const documentsApi = {
-  getAll: (projectId?: string) => 
-    api.get<Document[]>('/documents', { params: { projectId } }),
-  getById: (id: string) => api.get<Document>(`/documents/${id}`),
-  upload: (file: File, projectId: string) => {
+  getAll: async (projectId?: string) => {
+    const response = await api.get<Document[]>('/documents', { params: { projectId } });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get<Document>(`/documents/${id}`);
+    return response.data;
+  },
+  upload: async (file: File, projectId: string) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('projectId', projectId);
-    return api.post<Document>('/documents/upload', formData, {
+    const response = await api.post<Document>('/documents/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
   },
-  create: (data: Partial<Document>) => api.post<Document>('/documents', data),
-  delete: (id: string) => api.delete(`/documents/${id}`),
+  create: async (data: Partial<Document>) => {
+    const response = await api.post<Document>('/documents', data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete(`/documents/${id}`);
+    return response.data;
+  },
 };
 
 // Field Templates
 export const fieldTemplatesApi = {
-  getAll: (projectId?: string) => 
-    api.get<FieldTemplate[]>('/field-templates', { params: { projectId } }),
-  getById: (id: string) => api.get<FieldTemplate>(`/field-templates/${id}`),
-  create: (data: Partial<FieldTemplate>) => api.post<FieldTemplate>('/field-templates', data),
-  update: (id: string, data: Partial<FieldTemplate>) => 
-    api.patch<FieldTemplate>(`/field-templates/${id}`, data),
-  delete: (id: string) => api.delete(`/field-templates/${id}`),
+  getAll: async (projectId?: string) => {
+    const response = await api.get<FieldTemplate[]>('/field-templates', { params: { projectId } });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get<FieldTemplate>(`/field-templates/${id}`);
+    return response.data;
+  },
+  create: async (data: Partial<FieldTemplate>) => {
+    const response = await api.post<FieldTemplate>('/field-templates', data);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<FieldTemplate>) => {
+    const response = await api.patch<FieldTemplate>(`/field-templates/${id}`, data);
+    return response.data;
+  },
+  delete: async (id: string) => {
+    const response = await api.delete(`/field-templates/${id}`);
+    return response.data;
+  },
 };
 
 // Extractions
 export const extractionsApi = {
-  getAll: (params?: { projectId?: string; documentId?: string }) => 
-    api.get<Extraction[]>('/extractions', { params }),
-  getById: (id: string) => api.get<Extraction>(`/extractions/${id}`),
-  start: (data: { projectId: string; documentId: string }) => 
-    api.post<Extraction>('/extractions/start', data),
-  complete: (id: string, data: { extractedFields: any[] }) => 
-    api.post<Extraction>(`/extractions/${id}/complete`, data),
-  markFailed: (id: string, errorMessage: string) => 
-    api.patch<Extraction>(`/extractions/${id}/fail`, { errorMessage }),
+  getAll: async (params?: { projectId?: string; documentId?: string }) => {
+    const response = await api.get<Extraction[]>('/extractions', { params });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get<Extraction>(`/extractions/${id}`);
+    return response.data;
+  },
+  start: async (data: { projectId: string; documentId: string }) => {
+    const response = await api.post<Extraction>('/extractions/start', data);
+    return response.data;
+  },
+  complete: async (id: string, data: { extractedFields: any[] }) => {
+    const response = await api.post<Extraction>(`/extractions/${id}/complete`, data);
+    return response.data;
+  },
+  markFailed: async (id: string, errorMessage: string) => {
+    const response = await api.patch<Extraction>(`/extractions/${id}/fail`, { errorMessage });
+    return response.data;
+  },
 };
 
 // Reviews
 export const reviewsApi = {
-  getAll: (params?: { extractionId?: string; status?: string }) => 
-    api.get<Review[]>('/reviews', { params }),
-  getById: (id: string) => api.get<Review>(`/reviews/${id}`),
-  getByExtractedField: (extractedFieldId: string) => 
-    api.get<Review>(`/reviews/extracted-field/${extractedFieldId}`),
-  update: (id: string, data: Partial<Review>) => 
-    api.patch<Review>(`/reviews/${id}`, data),
-  getStatistics: (projectId: string) => 
-    api.get(`/reviews/statistics/${projectId}`),
-  getProgress: (projectId: string) => 
-    api.get(`/reviews/progress/${projectId}`),
+  getAll: async (params?: { extractionId?: string; status?: string }) => {
+    const response = await api.get<Review[]>('/reviews', { params });
+    return response.data;
+  },
+  getById: async (id: string) => {
+    const response = await api.get<Review>(`/reviews/${id}`);
+    return response.data;
+  },
+  getByExtractedField: async (extractedFieldId: string) => {
+    const response = await api.get<Review>(`/reviews/extracted-field/${extractedFieldId}`);
+    return response.data;
+  },
+  update: async (id: string, data: Partial<Review>) => {
+    const response = await api.patch<Review>(`/reviews/${id}`, data);
+    return response.data;
+  },
+  getStatistics: async (projectId: string) => {
+    const response = await api.get(`/reviews/statistics/${projectId}`);
+    return response.data;
+  },
+  getProgress: async (projectId: string) => {
+    const response = await api.get(`/reviews/progress/${projectId}`);
+    return response.data;
+  },
 };
 
 // Health Check
 export const healthApi = {
-  check: () => api.get('/health'),
+  check: async () => {
+    const response = await api.get('/health');
+    return response.data;
+  },
 };

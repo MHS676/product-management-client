@@ -10,19 +10,20 @@ export default function ExtractionsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedExtraction, setSelectedExtraction] = useState<Extraction | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState('');
+  const [selectedProjectId, setSelectedProjectId] = useState('');
 
   const { data: extractions, isLoading } = useQuery({
     queryKey: ['extractions'],
-    queryFn: extractionsApi.getAll,
+    queryFn: () => extractionsApi.getAll(),
   });
 
   const { data: documents } = useQuery({
     queryKey: ['documents'],
-    queryFn: documentsApi.getAll,
+    queryFn: () => documentsApi.getAll(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: extractionsApi.create,
+  const startMutation = useMutation({
+    mutationFn: (data: { projectId: string; documentId: string }) => extractionsApi.start(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['extractions'] });
       setShowModal(false);
@@ -30,8 +31,8 @@ export default function ExtractionsPage() {
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: extractionsApi.delete,
+  const markFailedMutation = useMutation({
+    mutationFn: ({ id, errorMessage }: { id: string; errorMessage: string }) => extractionsApi.markFailed(id, errorMessage),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['extractions'] });
     },
@@ -39,14 +40,14 @@ export default function ExtractionsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedDocumentId) {
-      createMutation.mutate({ documentId: selectedDocumentId });
+    if (selectedDocumentId && selectedProjectId) {
+      startMutation.mutate({ projectId: selectedProjectId, documentId: selectedDocumentId });
     }
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this extraction?')) {
-      deleteMutation.mutate(id);
+    if (confirm('Are you sure you want to mark this extraction as failed?')) {
+      markFailedMutation.mutate({ id, errorMessage: 'Manually marked as failed' });
     }
   };
 
@@ -103,12 +104,12 @@ export default function ExtractionsPage() {
               </tr>
             </thead>
             <tbody>
-              {extractions?.map((extraction) => (
+              {extractions?.map((extraction: Extraction) => (
                 <tr key={extraction.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <FileText size={18} color="#8b5cf6" />
-                      {extraction.document?.fileName || 'N/A'}
+                      Document {extraction.documentId}
                     </div>
                   </td>
                   <td>
@@ -117,7 +118,7 @@ export default function ExtractionsPage() {
                     </span>
                   </td>
                   <td>{extraction.extractedFields?.length || 0}</td>
-                  <td>{format(new Date(extraction.startedAt), 'MMM d, yyyy HH:mm')}</td>
+                  <td>{extraction.startedAt ? format(new Date(extraction.startedAt), 'MMM d, yyyy HH:mm') : 'N/A'}</td>
                   <td>
                     {extraction.completedAt
                       ? format(new Date(extraction.completedAt), 'MMM d, yyyy HH:mm')
@@ -157,6 +158,17 @@ export default function ExtractionsPage() {
             </div>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
+                <label>Project ID *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  placeholder="Enter project ID"
+                  required
+                />
+              </div>
+              <div className="form-group">
                 <label>Document *</label>
                 <select
                   className="form-control"
@@ -165,9 +177,9 @@ export default function ExtractionsPage() {
                   required
                 >
                   <option value="">Select a document</option>
-                  {documents?.map((doc) => (
+                  {documents?.map((doc: any) => (
                     <option key={doc.id} value={doc.id}>
-                      {doc.fileName} - {doc.project?.name}
+                      {doc.fileName} - {doc.projectId}
                     </option>
                   ))}
                 </select>
@@ -183,9 +195,9 @@ export default function ExtractionsPage() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={createMutation.isPending}
+                  disabled={startMutation.isPending}
                 >
-                  {createMutation.isPending ? 'Starting...' : 'Start'}
+                  {startMutation.isPending ? 'Starting...' : 'Start'}
                 </button>
               </div>
             </form>
@@ -206,7 +218,7 @@ export default function ExtractionsPage() {
               <div className="info-grid" style={{ marginBottom: '1.5rem' }}>
                 <div>
                   <span className="text-muted">Document:</span>
-                  <span>{selectedExtraction.document?.fileName}</span>
+                  <span>Document {selectedExtraction.documentId}</span>
                 </div>
                 <div>
                   <span className="text-muted">Status:</span>
@@ -214,10 +226,12 @@ export default function ExtractionsPage() {
                     {selectedExtraction.status}
                   </span>
                 </div>
-                <div>
-                  <span className="text-muted">Started:</span>
-                  <span>{format(new Date(selectedExtraction.startedAt), 'PPpp')}</span>
-                </div>
+                {selectedExtraction.startedAt && (
+                  <div>
+                    <span className="text-muted">Started:</span>
+                    <span>{format(new Date(selectedExtraction.startedAt), 'PPpp')}</span>
+                  </div>
+                )}
                 {selectedExtraction.completedAt && (
                   <div>
                     <span className="text-muted">Completed:</span>

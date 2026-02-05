@@ -17,22 +17,15 @@ export default function ReviewsPage() {
 
   const { data: reviews, isLoading } = useQuery({
     queryKey: ['reviews'],
-    queryFn: reviewsApi.getAll,
+    queryFn: () => reviewsApi.getAll(),
   });
 
   const { data: extractions } = useQuery({
     queryKey: ['extractions'],
-    queryFn: extractionsApi.getAll,
+    queryFn: () => extractionsApi.getAll(),
   });
 
-  const createMutation = useMutation({
-    mutationFn: reviewsApi.create,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reviews'] });
-      setShowModal(false);
-      resetForm();
-    },
-  });
+  // Reviews are created automatically with extractions, so we only update them
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
@@ -58,17 +51,15 @@ export default function ReviewsPage() {
     e.preventDefault();
     if (editingReview) {
       updateMutation.mutate({ id: editingReview.id, data: formData });
-    } else {
-      createMutation.mutate(formData);
     }
   };
 
   const handleEdit = (review: Review) => {
     setEditingReview(review);
     setFormData({
-      extractionId: review.extractionId,
-      reviewerName: review.reviewerName,
-      comments: review.comments || '',
+      extractionId: review.extractedFieldId,
+      reviewerName: review.reviewedBy || '',
+      comments: review.reviewerNotes || '',
       status: review.status as any,
     });
     setShowModal(true);
@@ -76,9 +67,11 @@ export default function ReviewsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, string> = {
-      approved: 'badge-success',
-      rejected: 'badge-error',
-      pending: 'badge-warning',
+      PENDING: 'badge-warning',
+      CONFIRMED: 'badge-success',
+      REJECTED: 'badge-error',
+      MANUAL_UPDATED: 'badge-info',
+      MISSING_DATA: 'badge-default',
     };
     return statusMap[status] || 'badge-default';
   };
@@ -124,13 +117,13 @@ export default function ReviewsPage() {
               </tr>
             </thead>
             <tbody>
-              {reviews?.map((review) => (
+              {reviews?.map((review: Review) => (
                 <tr key={review.id}>
-                  <td>{review.extraction?.document?.fileName || 'N/A'}</td>
-                  <td>{review.reviewerName}</td>
+                  <td>Extracted Field {review.extractedFieldId}</td>
+                  <td>{review.reviewedBy || 'N/A'}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {review.status === 'approved' ? (
+                      {review.status === 'CONFIRMED' ? (
                         <CheckCircle size={18} color="#10b981" />
                       ) : (
                         <XCircle size={18} color="#ef4444" />
@@ -140,8 +133,8 @@ export default function ReviewsPage() {
                       </span>
                     </div>
                   </td>
-                  <td className="text-muted">{review.comments || 'No comments'}</td>
-                  <td>{format(new Date(review.reviewedAt), 'MMM d, yyyy HH:mm')}</td>
+                  <td className="text-muted">{review.reviewerNotes || 'No comments'}</td>
+                  <td>{review.reviewedAt ? format(new Date(review.reviewedAt), 'MMM d, yyyy HH:mm') : 'N/A'}</td>
                   <td>
                     <button
                       className="btn btn-sm btn-secondary"
@@ -179,9 +172,9 @@ export default function ReviewsPage() {
                   disabled={!!editingReview}
                 >
                   <option value="">Select an extraction</option>
-                  {extractions?.map((extraction) => (
+                  {extractions?.map((extraction: any) => (
                     <option key={extraction.id} value={extraction.id}>
-                      {extraction.document?.fileName} - {extraction.status}
+                      {extraction.documentId} - {extraction.status}
                     </option>
                   ))}
                 </select>
@@ -239,7 +232,7 @@ export default function ReviewsPage() {
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={createMutation.isPending || updateMutation.isPending}
+                  disabled={updateMutation.isPending}
                 >
                   {editingReview ? 'Update' : 'Create'}
                 </button>

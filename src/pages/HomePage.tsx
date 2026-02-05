@@ -104,8 +104,8 @@ export default function HomePage() {
               <span className="badge badge-success">{health.status}</span>
             </div>
             <div>
-              <span className="text-muted">Database:</span>
-              <span className="badge badge-success">{health.database}</span>
+              <span className="text-muted">Service:</span>
+              <span>{health.service}</span>
             </div>
             <div>
               <span className="text-muted">Timestamp:</span>

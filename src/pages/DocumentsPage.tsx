@@ -12,17 +12,17 @@ export default function DocumentsPage() {
 
   const { data: documents, isLoading } = useQuery({
     queryKey: ['documents'],
-    queryFn: documentsApi.getAll,
+    queryFn: () => documentsApi.getAll(),
   });
 
   const { data: projects } = useQuery({
     queryKey: ['projects'],
-    queryFn: projectsApi.getAll,
+    queryFn: () => projectsApi.getAll(),
   });
 
   const uploadMutation = useMutation({
     mutationFn: ({ projectId, file }: { projectId: string; file: File }) =>
-      documentsApi.upload(projectId, file),
+      documentsApi.upload(file, projectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       setShowModal(false);
@@ -32,7 +32,7 @@ export default function DocumentsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: documentsApi.delete,
+    mutationFn: (id: string) => documentsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
     },
@@ -52,9 +52,7 @@ export default function DocumentsPage() {
   };
 
   const handleDownload = (doc: Document) => {
-    if (doc.filePath) {
-      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/documents/${doc.id}/download`, '_blank');
-    }
+    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/documents/${doc.id}/download`, '_blank');
   };
 
   const getStatusBadge = (status: string) => {
@@ -98,14 +96,14 @@ export default function DocumentsPage() {
               <tr>
                 <th>File Name</th>
                 <th>Project</th>
-                <th>Status</th>
-                <th>Pages</th>
+                <th>Format</th>
+                <th>Size</th>
                 <th>Uploaded</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {documents?.map((doc) => (
+              {documents?.map((doc: Document) => (
                 <tr key={doc.id}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -113,25 +111,23 @@ export default function DocumentsPage() {
                       {doc.fileName}
                     </div>
                   </td>
-                  <td>{doc.project?.name || 'N/A'}</td>
+                  <td>{doc.projectId}</td>
                   <td>
-                    <span className={`badge ${getStatusBadge(doc.status)}`}>
-                      {doc.status}
+                    <span className="badge badge-info">
+                      {doc.format}
                     </span>
                   </td>
-                  <td>{doc.pageCount || 'N/A'}</td>
+                  <td>{(doc.fileSize / 1024).toFixed(2)} KB</td>
                   <td>{format(new Date(doc.uploadedAt), 'MMM d, yyyy')}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      {doc.filePath && (
-                        <button
-                          className="btn btn-sm btn-secondary"
-                          onClick={() => handleDownload(doc)}
-                          title="Download"
-                        >
-                          <Download size={16} />
-                        </button>
-                      )}
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => handleDownload(doc)}
+                        title="Download"
+                      >
+                        <Download size={16} />
+                      </button>
                       <button
                         className="btn btn-sm btn-danger"
                         onClick={() => handleDelete(doc.id)}
